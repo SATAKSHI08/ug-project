@@ -9,6 +9,12 @@ cap = cv2.VideoCapture("highway_5min.mp4")
 
 # Object detection from Stable camera
 object_detector = cv2.createBackgroundSubtractorMOG2(history=100, varThreshold=40)
+##################################################
+
+
+f = 25
+w = int(1000/(f-1))
+print(w)
 
 
 ############# coordinate #############################################################
@@ -96,7 +102,13 @@ while True:
     x,y,w,h = rect
     if ret:
         roi = frame[y:y+h, x:x+w].copy()
+ 
+        pts = pts - pts.min(axis=0)
+        mask = np.zeros(roi.shape[:2], np.uint8)
+        cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
+        ##  do bit-op
+        roi = cv2.bitwise_and(roi,roi, mask=mask)
         
 
 ##    # Extract Region of interest
@@ -124,14 +136,32 @@ while True:
         cv2.putText(roi, str(id), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
         cv2.rectangle(roi, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
+
+##        if(tracker.getsp(id)<tracker.limit()):
+##            cv2.putText(roi,str(id)+" "+str(tracker.getsp(id)),(x,y-15), cv2.FONT_HERSHEY_PLAIN,1,(255,255,0),2)
+##            cv2.rectangle(roi, (x, y), (x + w, y + h), (0, 255, 0), 3)
+##        else:
+##            cv2.putText(roi,str(id)+ " "+str(tracker.getsp(id)),(x, y-15),cv2.FONT_HERSHEY_PLAIN, 1,(0, 0, 255),2)
+##            cv2.rectangle(roi, (x, y), (x + w, y + h), (0, 165, 255), 3)
+##
+##        s = tracker.getsp(id)
+##        if (tracker.f[id] == 1 and s != 0):
+##            tracker.capture(roi, x, y, h, w, s, id)
+
+            
     cv2.imshow("roi", roi)
     cv2.imshow("Frame", frame)
     cv2.imshow("Mask", mask)
 
-    key = cv2.waitKey(30)
+    key = cv2.waitKey(w-10)
     if key == 27:
+        tracker.end()
+        end=1
         break
+if(end!=1):
+    tracker.end()
 
 cap.release()
 cv2.destroyAllWindows()
+
 
