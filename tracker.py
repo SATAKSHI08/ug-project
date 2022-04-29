@@ -147,5 +147,3 @@ class EuclideanDistTracker:
         file.write("Total Vehicles :\t"+str(self.count)+"\n")
         file.write("Exceeded speed limit :\t"+str(self.exceeded))
         file.close()
-
-
