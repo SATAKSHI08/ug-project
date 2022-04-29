@@ -143,10 +143,10 @@ while True:
 ##        else:
 ##            cv2.putText(roi,str(id)+ " "+str(tracker.getsp(id)),(x, y-15),cv2.FONT_HERSHEY_PLAIN, 1,(0, 0, 255),2)
 ##            cv2.rectangle(roi, (x, y), (x + w, y + h), (0, 165, 255), 3)
-##
-##        s = tracker.getsp(id)
-##        if (tracker.f[id] == 1 and s != 0):
-##            tracker.capture(roi, x, y, h, w, s, id)
+
+        s = tracker.getsp(id)
+        if (tracker.f[id] == 1 and s != 0):
+            tracker.capture(roi, x, y, h, w, s, id)
 
             
     cv2.imshow("roi", roi)
@@ -163,5 +163,4 @@ if(end!=1):
 
 cap.release()
 cv2.destroyAllWindows()
-
 
