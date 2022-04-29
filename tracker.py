@@ -5,8 +5,10 @@ import cv2
 
 limit = 80
 
+endTimeList=[]
 file = open("E://UG//SpeedRecord.txt","w")
-file.write("ID \t SPEED\n------\t-------\n")
+file.write("ID \t SPEED  \t START TIME \t END TIME \n--------\t---------- \t----------------\t------------------------\n")
+
 file.close()
 class EuclideanDistTracker:
     def __init__(self):
@@ -25,11 +27,15 @@ class EuclideanDistTracker:
         self.capf = np.zeros(1000)
         self.count = 0
         self.exceeded =0
+        self.startTime=""
+        self.endTime=""
 
     def update(self, objects_rect):
         # Objects boxes and ids
         objects_bbs_ids = []
-
+        flagg=1
+        flaggend=1
+        global endTimeList
         # Get center point of new object
         for rect in objects_rect:
             x, y, w, h = rect
@@ -46,18 +52,22 @@ class EuclideanDistTracker:
                     #print(self.center_points)
                     objects_bbs_ids.append([x, y, w, h, id])
                     same_object_detected = True
-                    
-
+                    flaggend=1
                 #START TIMER......
                 if (y >= 15 and y <= 50):
-                        self.s1[0,id] = time.time()
-
+                    self.s1[0,id] = time.time()
+                    if(flagg):
+                        self.startTime=time.asctime(time.localtime(time.time()))
+                        flagg=0
                 #STOP TIMER and FIND DIFFERENCE
                 if (y >= 90 and y <= 150):
                     self.s2[0,id] = time.time()
                     self.s[0,id] = self.s2[0,id] - self.s1[0,id]
                     print(self.s[0,id])
                     print(time.asctime(time.localtime(time.time())))
+                    endTimeList.append(time.asctime(time.localtime(time.time())))
+                        
+                    #startEnd_Time.append(time.asctime(time.localtime(time.time())))
                 #CAPTURE FLAG
                 if (y<60):
                     self.f[id]=1
@@ -69,6 +79,17 @@ class EuclideanDistTracker:
                 self.s[0,self.id_count]=0
                 self.s1[0,self.id_count]=0
                 self.s2[0,self.id_count]=0
+                flagg=1
+                flaggend=0
+                if endTimeList:
+                    self.endTime=endTimeList[-1]
+                    endTimeList.clear()
+                
+                    
+                
+                
+                
+                    
 
         # Clean the dictionary by center points to remove IDS not used anymore
         new_center_points = {}
@@ -107,7 +128,8 @@ class EuclideanDistTracker:
                 filet.write(str(id)+" \t "+str(sp)+"<---exceeded\n")
                 self.exceeded+=1
             else:
-                filet.write(str(id) + " \t " + str(sp) + "\n")
+                filet.write(str(id) + " \t " + str(sp) + " \t "  + str(self.startTime)+ " \t " + str(self.endTime)+" \t" + "\n")
+                
             filet.close()
 
 
