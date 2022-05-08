@@ -16,7 +16,7 @@ f = 25
 w = int(1000/(f-1))
 print(w)
 
-
+Vehicle_type="bike"
 ############# coordinate #############################################################
 #####real coordinate are RealXY
 xy_coordinate=[]
@@ -83,8 +83,11 @@ while(1):
 cv2.destroyAllWindows()
 print(RealXY)
 
-
-
+#####################cascading #########################################
+car_cascade= cv2.CascadeClassifier('cars.xml')
+ped_cascade= cv2.CascadeClassifier('pedestrian.xml')
+bike_cascade= cv2.CascadeClassifier('two_wheeler.xml')
+bus_cascade= cv2.CascadeClassifier('bus_front.xml')
 
 ############################################################################
         
@@ -109,7 +112,35 @@ while True:
 
         ##  do bit-op
         roi = cv2.bitwise_and(roi,roi, mask=mask)
-        
+        ##################################
+        ################################# vehicle detect ####
+        ############cascade#######################################
+        gray=cv2.cvtColor(roi,cv2.COLOR_BGR2GRAY)
+        cars= car_cascade.detectMultiScale(gray)
+        for (x,y,w,h) in cars:
+            #plate=f[y:y+h,x:x+w]
+            cv2.rectangle(roi,(x,y),(x+w,y+h),(0,255,0),2)
+            Vehicle_type="car"
+        ped= ped_cascade.detectMultiScale(gray)
+        for (x,y,w,h) in ped:
+            #plate=f[y:y+h,x:x+w]
+            cv2.rectangle(roi,(x,y),(x+w,y+h),(0,255,0),2)
+            #cv2.putText(roi,'ped',(x,y-10),cv2.FONT_HERSHEY_SIMPLEX,1,(23,43,212),2)
+            Vehicle_type="ped"
+        bike= bike_cascade.detectMultiScale(gray)
+        for (x,y,w,h) in bike:
+            #plate=f[y:y+h,x:x+w]
+            cv2.rectangle(roi,(x,y),(x+w,y+h),(0,255,0),2)
+            #cv2.putText(roi,'bike',(x,y-10),cv2.FONT_HERSHEY_SIMPLEX,1,(23,43,212),2)
+            Vehicle_type="bike"
+        bus= bus_cascade.detectMultiScale(gray)
+        for (x,y,w,h) in bus:
+            #plate=f[y:y+h,x:x+w]
+            cv2.rectangle(roi,(x,y),(x+w,y+h),(0,255,0),2)
+            #cv2.putText(roi,'bus',(x,y-10),cv2.FONT_HERSHEY_SIMPLEX,1,(23,43,212),2)
+            Vehicle_type="bus"
+        ###########################################################
+        #################detection end###############################
 
 ##    # Extract Region of interest
 ##    roi = frame[340: 720,500: 800]
@@ -125,8 +156,6 @@ while True:
         if area > 100:
             #cv2.drawContours(roi, [cnt], -1, (0, 255, 0), 2)
             x, y, w, h = cv2.boundingRect(cnt)
-
-
             detections.append([x, y, w, h])
 
     # 2. Object Tracking
@@ -146,7 +175,7 @@ while True:
 
         s = tracker.getsp(id)
         if (tracker.f[id] == 1 and s != 0):
-            tracker.capture(roi, x, y, h, w, s, id)
+            tracker.capture(roi, x, y, h, w, s,Vehicle_type, id)
 
             
     cv2.imshow("roi", roi)
@@ -163,5 +192,3 @@ if(end!=1):
 
 cap.release()
 cv2.destroyAllWindows()
-
-
