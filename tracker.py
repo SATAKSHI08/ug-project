@@ -4,10 +4,11 @@ import numpy as np
 import cv2
 
 limit = 80
-
-endTimeList=[]
+entryflag=1
+entrytime=0
 file = open("E://UG//SpeedRecord.txt","w")
-file.write("ID \t SPEED  \t START TIME \t END TIME \n--------\t---------- \t----------------\t------------------------\n")
+#file.write("ID \t SPEED  \t CURRENT START TIME \t  \tCURRENT END TIME\t\t VEHICLE TYPE \n--------\t---------- \t----------------\t \t-----------------------\t \t-------------------------\n")
+file.write("ID \t SPEED \t ENTRY TIME \t \t EXIT TIME \t CURRENT START TIME \t \tCURRENT END TIME\t \t VEHICLE TYPE \n--------\t----------\t----------------------\t \t----------------\t \t-----------------------\t \t-------------------------\n")
 
 file.close()
 class EuclideanDistTracker:
@@ -20,22 +21,26 @@ class EuclideanDistTracker:
         #self.start = 0
         #self.stop = 0
 ##        self.et=0
-        self.s1 = np.zeros((1,1000))
-        self.s2 = np.zeros((1,1000))
-        self.s = np.zeros((1,1000))
+        self.s1 = np.zeros((1,1000)) #start time 
+        self.s2 = np.zeros((1,1000)) ##time difference
+        self.s = np.zeros((1,1000))  ## speed
         self.f = np.zeros(1000)
         self.capf = np.zeros(1000)
         self.count = 0
         self.exceeded =0
         self.startTime=""
-        self.endTime=""
+        
 
     def update(self, objects_rect):
         # Objects boxes and ids
         objects_bbs_ids = []
-        flagg=1
-        flaggend=1
-        global endTimeList
+        flagg=1  ##using to start timer
+        #intitally flagg 1 when new obejct detected is true we set flagg 1 and in
+        # in start timer range we just stop by saving ist instant of time.
+        
+        
+        global entryflag
+        global entrytime
         # Get center point of new object
         for rect in objects_rect:
             x, y, w, h = rect
@@ -52,21 +57,24 @@ class EuclideanDistTracker:
                     #print(self.center_points)
                     objects_bbs_ids.append([x, y, w, h, id])
                     same_object_detected = True
-                    flaggend=1
+                    
                 #START TIMER......
                 if (y >= 15 and y <= 50):
                     self.s1[0,id] = time.time()
                     if(flagg):
                         self.startTime=time.asctime(time.localtime(time.time()))
                         flagg=0
+                    if(entryflag):
+                        entrytime= time.time()
+                        entryflag=0
                 #STOP TIMER and FIND DIFFERENCE
                 if (y >= 90 and y <= 150):
                     self.s2[0,id] = time.time()
                     self.s[0,id] = self.s2[0,id] - self.s1[0,id]
+                    #print("start time" + str(self.s1[0,id]))
                     print(self.s[0,id])
                     print(time.asctime(time.localtime(time.time())))
-                    endTimeList.append(time.asctime(time.localtime(time.time())))
-                        
+                   
                     #startEnd_Time.append(time.asctime(time.localtime(time.time())))
                 #CAPTURE FLAG
                 if (y<60):
@@ -80,12 +88,8 @@ class EuclideanDistTracker:
                 self.s1[0,self.id_count]=0
                 self.s2[0,self.id_count]=0
                 flagg=1
-                flaggend=0
-                if endTimeList:
-                    self.endTime=endTimeList[-1]
-                    endTimeList.clear()
                 
-                    
+                
                 
                 
                 
@@ -105,31 +109,31 @@ class EuclideanDistTracker:
 #SPEEED FUNCTION
     def getsp(self,id):
         if (self.s[0,id]!=0):
-            s =  30.0/ self.s[0, id]
+            s =  20.0/ self.s[0, id]
         else:
             s = 0
 
         return int(s)
 
     #SAVE VEHICLE DATA
-    def capture(self,img,x,y,h,w,sp,id):
+    def capture(self,img,x,y,h,w,sp,Vehicle_type,id):
         if(self.capf[id]==0):
             self.capf[id] = 1
             self.f[id]=0
-            crop_img = img[y-5:y + h+5, x-5:x + w+5]
-            n = str(id)+"_speed_"+str(sp)
-            file = 'E://UG//' + n + '.jpg'
-            cv2.imwrite(file, crop_img)
+            #crop_img = img[y-5:y + h+5, x-5:x + w+5]
+            #n = str(id)+"_speed_"+str(sp)
+            #file = 'E://UG//' + n + '.jpg'
+            #cv2.imwrite(file, crop_img)
             self.count += 1
             filet = open("E://UG//SpeedRecord.txt", "a")
             if(sp>limit):
-                file2 = 'E://UG//exceeded//' + n + '.jpg'
-                cv2.imwrite(file2, crop_img)
-                filet.write(str(id)+" \t "+str(sp)+"<---exceeded\n")
+                #file2 = 'E://UG//exceeded//' + n + '.jpg'
+                #cv2.imwrite(file2, crop_img)
+                filet.write(str(id)+"\t"+str(24)+ "\t" + str(self.s1[0,id]-entrytime) +"\t" + str(self.s2[0,id]-entrytime)+"\t"+ str(self.startTime)+ "\t" + str(time.asctime(time.localtime(self.s2[0,id])))+"\t" +str(Vehicle_type)+ "\n")
                 self.exceeded+=1
             else:
-                filet.write(str(id) + " \t " + str(sp) + " \t "  + str(self.startTime)+ " \t " + str(self.endTime)+" \t" + "\n")
-                
+                filet.write(str(id) + "\t" + str(sp) + "\t" + str(self.s1[0,id]-entrytime) +"\t" + str(self.s2[0,id]-entrytime)+"\t" + str(self.startTime)+ "\t" + str(time.asctime(time.localtime(self.s2[0,id])))+"\t" +str(Vehicle_type) + "\n")
+                #time.asctime(time.localtime(time.time()))
             filet.close()
 
 
@@ -147,3 +151,4 @@ class EuclideanDistTracker:
         file.write("Total Vehicles :\t"+str(self.count)+"\n")
         file.write("Exceeded speed limit :\t"+str(self.exceeded))
         file.close()
+
